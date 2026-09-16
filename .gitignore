@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+
+# Environment files
+.env
+*.env.local
+
+# Uploaded files
+data/uploads/*
+!data/uploads/.gitkeep
+
+# MCP server runtime
+data/config/secrets.env
+
+# Node (for MCP Inspector)
+node_modules/
+
+# uv
+.python-version
