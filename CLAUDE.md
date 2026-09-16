@@ -29,7 +29,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 
 ---
 
-## File-by-File Summary (Phase 1)
+## File-by-File Summary
 
 ### `backend/`
 
@@ -40,14 +40,15 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | `database.py` | SQLAlchemy async engine for SQLite (`data/vulnex.db`). `get_db()` dependency for FastAPI route injection. |
 | `models.py` | SQLAlchemy ORM models: `User`, `Folder`, `Document`, `Task`, `TaskComment`, `Event`. |
 | `schemas.py` | Pydantic request/response schemas for all API endpoints. |
-| `routers/documents.py` | Document CRUD: list, get, upload (multipart), view content (via MCP `read_file`), search, delete, summarize (placeholder). |
+| `routers/documents.py` | Document CRUD: list (JSON + HTML partial), get, upload (multipart), view content (via MCP `read_file`), search, delete, summarize (placeholder). HTML partial endpoint for HTMX document grid. |
 | `routers/tasks.py` | Task CRUD: list (with filters), get, create, update (PATCH), kanban status update, comments, delete. |
 | `routers/calendar.py` | Calendar: list events (includes tasks with due dates), get, create, delete. |
 | `services/document_service.py` | Document business logic. `get_document_content()` constructs full path and calls `mcp_service.read_file()`. |
 | `services/task_service.py` | Task business logic: CRUD, filtering, comment management. |
 | `services/mcp_service.py` | High-level wrappers: `read_file()`, `write_file()`, `list_files()`, `search_documents()`. All call `mcp_client.call_tool()`. |
 | `templates/base.html` | Jinja2 base template. CDN links for HTMX 1.9 + Alpine.js 3.x. Left sidebar nav. |
-| `templates/documents.html` | Document list grid, upload modal, document viewer panel, summary panel. |
+| `templates/documents.html` | Document list grid (HTMX partial loading), upload modal, document viewer panel, summary panel. |
+| `templates/_doc_cards.html` | HTMX partial for document cards — rendered by `/api/documents/partial/list`. |
 | `templates/tasks.html` | Kanban board (4 columns), task creation modal, HTMX-driven task loading. |
 | `templates/calendar.html` | Monthly calendar grid, event creation modal, prev/next/today navigation. |
 | `static/css/style.css` | Global styles. Muted SaaS color palette (blue primary, off-white bg, green accent). |
@@ -99,7 +100,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 
 | ID | Name | Location | Status |
 |----|------|----------|--------|
-| MCP02 | Path Traversal Blacklist Bypass | `mcp_server/file_tools.py` (`is_path_safe()`) | Code in place; not yet exposed through UI (Phase 2) |
+| MCP02 | Path Traversal Blacklist Bypass | `mcp_server/file_tools.py` (`is_path_safe()`) | **Done** — live through document viewer, exploit doc written |
 | MCP01 | Secret Exposure | `data/config/secrets.env` | File not yet created (Phase 3) |
 | MCP06 | Indirect Prompt Injection | `backend/llm_client.py` + `backend/services/summarization_service.py` | Not yet implemented (Phase 4) |
 
@@ -133,8 +134,8 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | Phase | Branch | Description | Status |
 |-------|--------|-------------|--------|
 | 1 | `phase-1/mcp-foundation` | MCP server/client, file tools, backend, frontend, basic CRUD | **Done** |
-| 2 | `phase-2/mcp02-path-traversal` | MCP02 vulnerability, document viewer integration, exploit docs | Next |
-| 3 | `phase-3/mcp01-secret-exposure` | MCP01 vulnerability, secrets file, exploit docs | Pending |
+| 2 | `phase-2/mcp02-path-traversal` | MCP02 vulnerability, document viewer integration, exploit docs | **Done** |
+| 3 | `phase-3/mcp01-secret-exposure` | MCP01 vulnerability, secrets file, exploit docs | Next |
 | 4 | `phase-4/mcp06-prompt-injection` | MCP06 vulnerability, Ollama integration, exploit docs | Pending |
 
 ## Running

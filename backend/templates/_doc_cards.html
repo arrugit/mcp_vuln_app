@@ -1,0 +1,30 @@
+<!-- Document card partial — rendered by HTMX for document list updates -->
+{% for doc in documents %}
+<div class="card doc-card" onclick="viewDocument({{ doc.id }})">
+    <div class="doc-icon">
+        {% if doc.filename.endswith('.md') %}📝
+        {% elif doc.filename.endswith('.txt') %}📄
+        {% elif doc.filename.endswith('.pdf') %}📕
+        {% elif doc.filename.endswith('.docx') %}📘
+        {% else %}📁
+        {% endif %}
+    </div>
+    <div class="doc-name">{{ doc.filename }}</div>
+    <div class="doc-meta">
+        {% if doc.size_bytes %}
+            {{ (doc.size_bytes / 1024) | round(1) }} KB
+        {% endif %}
+        &middot;
+        {{ doc.created_at.strftime('%b %d, %Y') }}
+    </div>
+    <div class="mt-1 flex gap-1">
+        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewDocument({{ doc.id }})">View</button>
+        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); summarizeDocument({{ doc.id }})">Summarize</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteDocument({{ doc.id }})">Delete</button>
+    </div>
+</div>
+{% else %}
+<div class="text-muted text-sm" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+    No documents uploaded yet. Click "Upload" to get started.
+</div>
+{% endfor %}

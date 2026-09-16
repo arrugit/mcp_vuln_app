@@ -23,7 +23,8 @@
               hx-encoding="multipart/form-data"
               hx-target="#doc-grid"
               hx-swap="innerHTML"
-              x-on:submit="open = false">
+              x-on:submit="open = false"
+              hx-on::after-request="document.body.dispatchEvent(new Event('document-updated'))">
             <div class="form-group">
                 <label>File</label>
                 <input type="file" name="file" accept=".txt,.md,.pdf,.docx" required>
@@ -37,7 +38,10 @@
 </div>
 
 <!-- Document List -->
-<div id="doc-grid" class="doc-grid mt-2">
+<div id="doc-grid" class="doc-grid mt-2"
+     hx-get="/api/documents/partial/list"
+     hx-trigger="load, document-updated from:body"
+     hx-swap="innerHTML">
     <div class="text-muted text-sm" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
         Loading documents...
     </div>
@@ -62,11 +66,6 @@
 </div>
 
 <script>
-    // Load documents on page load
-    document.body.addEventListener('htmx:load', function(evt) {
-        htmx.ajax('GET', '/api/documents/', '#doc-grid');
-    });
-
     function viewDocument(docId) {
         fetch('/api/documents/' + docId + '/content')
             .then(function(r) { return r.json(); })
@@ -91,6 +90,15 @@
             })
             .catch(function(err) {
                 content.textContent = 'Error: ' + err.message;
+            });
+    }
+
+    function deleteDocument(docId) {
+        if (!confirm('Delete this document?')) return;
+        fetch('/api/documents/' + docId, { method: 'DELETE' })
+            .then(function(r) { return r.json(); })
+            .then(function() {
+                document.body.dispatchEvent(new Event('document-updated'));
             });
     }
 </script>

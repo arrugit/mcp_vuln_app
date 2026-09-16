@@ -10,7 +10,10 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from backend.database import get_db
 from backend.schemas import DocumentContent, DocumentResponse
@@ -18,6 +21,7 @@ from backend.services import document_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates")
 
 # Upload directory
 UPLOAD_DIR = Path(__file__).parent.parent.parent / "data" / "uploads"
@@ -36,6 +40,24 @@ async def list_documents(
     """
     docs = await document_service.list_documents(db, owner_id=1, folder_id=folder_id)
     return [DocumentResponse.model_validate(d) for d in docs]
+
+
+@router.get("/partial/list", response_class=HTMLResponse)
+async def list_documents_partial(
+    request: Request,
+    folder_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+) -> HTMLResponse:
+    """
+    HTML partial for document list — used by HTMX for dynamic updates.
+
+    Returns rendered document card HTML that HTMX swaps into the grid.
+    """
+    docs = await document_service.list_documents(db, owner_id=1, folder_id=folder_id)
+    doc_responses = [DocumentResponse.model_validate(d) for d in docs]
+    return templates.TemplateResponse(
+        "_doc_cards.html", {"request": request, "documents": doc_responses}
+    )
 
 
 @router.get("/{doc_id}", response_model=DocumentResponse)
