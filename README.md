@@ -11,8 +11,12 @@ VULNEX is a document management, task tracking, and calendar/scheduling app that
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) package manager
 - Node.js + npm (for MCP Inspector, optional)
+- [Ollama](https://ollama.com/) with `llama3.2:3b` model pulled (for AI summarization)
 
-> Ollama with `llama3.2:3b` will be needed starting Phase 4 (AI summarization). Not required yet.
+```bash
+# Pull the Ollama model (one-time setup)
+ollama pull llama3.2:3b
+```
 
 ## Setup
 
@@ -22,7 +26,7 @@ git clone https://github.com/arrugit/mcp_vuln_app.git
 cd mcp_vuln_app
 
 # Checkout the latest phase branch
-git checkout phase-3/mcp01-secret-exposure
+git checkout phase-4/mcp06-prompt-injection
 
 # Install dependencies
 uv sync
@@ -60,24 +64,20 @@ Navigate to **http://localhost:8005** in your browser.
 
 ## Current Status
 
-### What's live (Phase 3)
+### What's live (Phase 4 — All vulnerabilities complete)
 
 - **Document Management** — upload (TXT, MD, PDF, DOCX), list, view content, delete. Content is read via the MCP server's `read_file` tool. Document list uses HTMX partial rendering for dynamic updates.
 - **Task Management** — create tasks (title, description, priority, due date), kanban board (To Do / In Progress / Review / Done), status updates, comments.
 - **Calendar** — monthly grid view, event creation, tasks with due dates appear on the calendar.
+- **AI Summarization** — click "Summarize" on any document to get an LLM-generated summary via local Ollama. Falls back to extractive summary if Ollama is unavailable.
 - **Configuration / Secrets** — view application secrets from `data/config/secrets.env`. Secrets are read through the MCP server's `read_file` tool (MCP01 vulnerability). Full values exposed via the Config page.
 - **MCP Architecture** — real MCP client/server wiring. The backend spawns the MCP server as a subprocess and communicates via JSON-RPC over stdio using `ClientSession.call_tool()`. Every file read goes through this protocol path.
-- **MCP02 Vulnerability** — path traversal via blacklist bypass is live. The document viewer reads files through the MCP server's `read_file` tool, which uses a flawed `is_path_safe()` function. Exploit documentation in `exploits/mcp02_path_traversal.md`.
-- **MCP01 Vulnerability** — secret file exposure is live. The `data/config/secrets.env` file is accessible via the MCP server because `data/config/` is not in the blocked directories list. Exploit documentation in `exploits/mcp01_secret_exposure.md`.
+- **MCP02 Vulnerability** — path traversal via blacklist bypass. Exploit doc: `exploits/mcp02_path_traversal.md`.
+- **MCP01 Vulnerability** — secret file exposure. Exploit doc: `exploits/mcp01_secret_exposure.md`.
+- **MCP06 Vulnerability** — indirect prompt injection via document content. Exploit doc: `exploits/mcp06_prompt_injection.md`.
 - **Frontend** — HTMX + Alpine.js + Jinja2 templates, no build step, professional SaaS aesthetic.
 
-### What's NOT yet exposed
-
-| Phase | What gets added |
-|-------|----------------|
-| Phase 4 | MCP06 — Indirect prompt injection (Ollama summarization flow processes untrusted document content) |
-
-Exploit documentation is added to the `exploits/` directory as each phase completes.
+All three vulnerabilities are now live. Exploit documentation is in the `exploits/` directory.
 
 ## Project Structure
 
@@ -86,18 +86,20 @@ vulnex/
   backend/
     main.py              # FastAPI app entrypoint
     mcp_client.py        # MCP client (subprocess + ClientSession)
+    llm_client.py        # Ollama HTTP client (LLM integration)
     models.py            # SQLAlchemy models (User, Document, Task, Event)
     schemas.py           # Pydantic request/response schemas
     database.py          # SQLAlchemy async engine + session factory
     routers/
-      documents.py       # Document CRUD + content viewing
+      documents.py       # Document CRUD + content viewing + summarization
       tasks.py           # Task CRUD + kanban status
       calendar.py        # Calendar event CRUD
       secrets.py         # Application secrets (MCP01 vulnerability)
     services/
-      document_service.py  # Document business logic
-      task_service.py      # Task business logic
-      mcp_service.py       # High-level MCP tool call wrappers
+      document_service.py    # Document business logic
+      task_service.py        # Task business logic
+      mcp_service.py         # High-level MCP tool call wrappers
+      summarization_service.py  # AI summarization via Ollama (MCP06)
     templates/             # Jinja2 templates (HTMX + Alpine.js)
     static/css/style.css   # Global styles
   mcp_server/
@@ -109,8 +111,9 @@ vulnex/
     config/              # Application config (secrets.env added in Phase 3)
     vulnex.db            # SQLite database (created at runtime)
   exploits/
-    mcp02_path_traversal.md  # Exploit documentation for MCP02
-    mcp01_secret_exposure.md # Exploit documentation for MCP01
+    mcp02_path_traversal.md   # Exploit documentation for MCP02
+    mcp01_secret_exposure.md  # Exploit documentation for MCP01
+    mcp06_prompt_injection.md # Exploit documentation for MCP06
 ```
 
 ## Tech Stack

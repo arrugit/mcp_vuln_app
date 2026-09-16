@@ -197,8 +197,13 @@ async def summarize_document(
     """
     Summarize a document using AI.
 
-    Placeholder — full implementation with Ollama will be added in Phase 4.
-    For now, returns a basic extractive summary.
+    Reads the document content via MCP and sends it to the local
+    Ollama LLM for summarization. Falls back to extractive summary
+    if Ollama is unavailable.
+
+    VULNERABILITY (MCP06): Document content is passed directly into
+    the LLM prompt without sanitization. A crafted document can
+    contain prompt injection payloads.
     """
     doc = await document_service.get_document(db, doc_id)
     if doc is None:
@@ -209,7 +214,10 @@ async def summarize_document(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Simple extractive summary (first 500 chars)
-    summary = content[:500] + "..." if len(content) > 500 else content
+    from backend.services import summarization_service
 
-    return {"id": doc.id, "filename": doc.filename, "summary": summary}
+    return await summarization_service.summarize_content(
+        content=content,
+        filename=doc.filename,
+        doc_id=doc.id,
+    )

@@ -81,16 +81,27 @@
         var panel = document.getElementById('summary-panel');
         var content = document.getElementById('summary-content');
         panel.style.display = 'block';
-        content.textContent = 'Generating summary...';
+        content.innerHTML = '<span class="text-muted">Generating summary...</span>';
 
         fetch('/api/documents/' + docId + '/summarize', { method: 'POST' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                content.textContent = data.summary || 'No summary generated.';
+                var html = '';
+                if (data.fallback) {
+                    html += '<div class="badge badge-warning mb-1">Ollama unavailable — fallback mode</div>';
+                }
+                html += '<div>' + escapeHtml(data.summary || 'No summary generated.') + '</div>';
+                content.innerHTML = html;
             })
             .catch(function(err) {
-                content.textContent = 'Error: ' + err.message;
+                content.innerHTML = '<span class="text-danger">Error: ' + escapeHtml(err.message) + '</span>';
             });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
     }
 
     function deleteDocument(docId) {
