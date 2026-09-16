@@ -43,6 +43,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | `routers/documents.py` | Document CRUD: list (JSON + HTML partial), get, upload (multipart), view content (via MCP `read_file`), search, delete, summarize (placeholder). HTML partial endpoint for HTMX document grid. |
 | `routers/tasks.py` | Task CRUD: list (with filters), get, create, update (PATCH), kanban status update, comments, delete. |
 | `routers/calendar.py` | Calendar: list events (includes tasks with due dates), get, create, delete. |
+| `routers/secrets.py` | Application secrets: list all (masked), read specific key (full value). Reads `data/config/secrets.env` via MCP `read_file` tool (MCP01 vulnerability). |
 | `services/document_service.py` | Document business logic. `get_document_content()` constructs full path and calls `mcp_service.read_file()`. |
 | `services/task_service.py` | Task business logic: CRUD, filtering, comment management. |
 | `services/mcp_service.py` | High-level wrappers: `read_file()`, `write_file()`, `list_files()`, `search_documents()`. All call `mcp_client.call_tool()`. |
@@ -51,6 +52,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | `templates/_doc_cards.html` | HTMX partial for document cards — rendered by `/api/documents/partial/list`. |
 | `templates/tasks.html` | Kanban board (4 columns), task creation modal, HTMX-driven task loading. |
 | `templates/calendar.html` | Monthly calendar grid, event creation modal, prev/next/today navigation. |
+| `templates/secrets.html` | Application configuration page. Lists secrets from `data/config/secrets.env` via MCP. Reveal buttons to show full values. |
 | `static/css/style.css` | Global styles. Muted SaaS color palette (blue primary, off-white bg, green accent). |
 
 ### `mcp_server/`
@@ -67,7 +69,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | Path | Purpose |
 |------|---------|
 | `uploads/` | User-uploaded documents (created at runtime). |
-| `config/` | Application config directory. `secrets.env` will be added in Phase 3. |
+| `config/` | Application config directory. `secrets.env` contains fake API keys and credentials (MCP01 target). |
 | `vulnex.db` | SQLite database (created at runtime on first start). |
 
 ---
@@ -101,7 +103,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | ID | Name | Location | Status |
 |----|------|----------|--------|
 | MCP02 | Path Traversal Blacklist Bypass | `mcp_server/file_tools.py` (`is_path_safe()`) | **Done** — live through document viewer, exploit doc written |
-| MCP01 | Secret Exposure | `data/config/secrets.env` | File not yet created (Phase 3) |
+| MCP01 | Secret Exposure | `data/config/secrets.env` | **Done** — live through Config page, exploit doc written |
 | MCP06 | Indirect Prompt Injection | `backend/llm_client.py` + `backend/services/summarization_service.py` | Not yet implemented (Phase 4) |
 
 ---
@@ -135,8 +137,8 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 |-------|--------|-------------|--------|
 | 1 | `phase-1/mcp-foundation` | MCP server/client, file tools, backend, frontend, basic CRUD | **Done** |
 | 2 | `phase-2/mcp02-path-traversal` | MCP02 vulnerability, document viewer integration, exploit docs | **Done** |
-| 3 | `phase-3/mcp01-secret-exposure` | MCP01 vulnerability, secrets file, exploit docs | Next |
-| 4 | `phase-4/mcp06-prompt-injection` | MCP06 vulnerability, Ollama integration, exploit docs | Pending |
+| 3 | `phase-3/mcp01-secret-exposure` | MCP01 vulnerability, secrets file, exploit docs | **Done** |
+| 4 | `phase-4/mcp06-prompt-injection` | MCP06 vulnerability, Ollama integration, exploit docs | Next |
 
 ## Running
 
