@@ -89,11 +89,12 @@ app.mount(
 )
 
 # Include API routers
-from backend.routers import calendar, documents, tasks  # noqa: E402
+from backend.routers import calendar, documents, secrets, tasks  # noqa: E402
 
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["calendar"])
+app.include_router(secrets.router, prefix="/api/secrets", tags=["secrets"])
 
 
 # Page routes — serve Jinja2 templates
@@ -127,3 +128,9 @@ async def tasks_page(request: Request) -> HTMLResponse:
 async def calendar_page(request: Request) -> HTMLResponse:
     """Render the calendar page."""
     return templates.TemplateResponse("calendar.html", {"request": request})
+
+
+@app.get("/secrets", response_class=HTMLResponse)
+async def secrets_page(request: Request) -> HTMLResponse:
+    """Render the application configuration / secrets page."""
+    return templates.TemplateResponse("secrets.html", {"request": request})

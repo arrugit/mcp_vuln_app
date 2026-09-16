@@ -22,7 +22,7 @@ git clone https://github.com/arrugit/mcp_vuln_app.git
 cd mcp_vuln_app
 
 # Checkout the latest phase branch
-git checkout phase-1/mcp-foundation
+git checkout phase-3/mcp01-secret-exposure
 
 # Install dependencies
 uv sync
@@ -60,20 +60,21 @@ Navigate to **http://localhost:8005** in your browser.
 
 ## Current Status
 
-### What's live (Phase 2)
+### What's live (Phase 3)
 
 - **Document Management** — upload (TXT, MD, PDF, DOCX), list, view content, delete. Content is read via the MCP server's `read_file` tool. Document list uses HTMX partial rendering for dynamic updates.
 - **Task Management** — create tasks (title, description, priority, due date), kanban board (To Do / In Progress / Review / Done), status updates, comments.
 - **Calendar** — monthly grid view, event creation, tasks with due dates appear on the calendar.
+- **Configuration / Secrets** — view application secrets from `data/config/secrets.env`. Secrets are read through the MCP server's `read_file` tool (MCP01 vulnerability). Full values exposed via the Config page.
 - **MCP Architecture** — real MCP client/server wiring. The backend spawns the MCP server as a subprocess and communicates via JSON-RPC over stdio using `ClientSession.call_tool()`. Every file read goes through this protocol path.
 - **MCP02 Vulnerability** — path traversal via blacklist bypass is live. The document viewer reads files through the MCP server's `read_file` tool, which uses a flawed `is_path_safe()` function. Exploit documentation in `exploits/mcp02_path_traversal.md`.
+- **MCP01 Vulnerability** — secret file exposure is live. The `data/config/secrets.env` file is accessible via the MCP server because `data/config/` is not in the blocked directories list. Exploit documentation in `exploits/mcp01_secret_exposure.md`.
 - **Frontend** — HTMX + Alpine.js + Jinja2 templates, no build step, professional SaaS aesthetic.
 
 ### What's NOT yet exposed
 
 | Phase | What gets added |
 |-------|----------------|
-| Phase 3 | MCP01 — Secret file exposure (`data/config/secrets.env` accessible via `read_file`) |
 | Phase 4 | MCP06 — Indirect prompt injection (Ollama summarization flow processes untrusted document content) |
 
 Exploit documentation is added to the `exploits/` directory as each phase completes.
@@ -92,6 +93,7 @@ vulnex/
       documents.py       # Document CRUD + content viewing
       tasks.py           # Task CRUD + kanban status
       calendar.py        # Calendar event CRUD
+      secrets.py         # Application secrets (MCP01 vulnerability)
     services/
       document_service.py  # Document business logic
       task_service.py      # Task business logic
@@ -108,6 +110,7 @@ vulnex/
     vulnex.db            # SQLite database (created at runtime)
   exploits/
     mcp02_path_traversal.md  # Exploit documentation for MCP02
+    mcp01_secret_exposure.md # Exploit documentation for MCP01
 ```
 
 ## Tech Stack
