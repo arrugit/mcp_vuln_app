@@ -56,7 +56,7 @@ async def list_documents_partial(
     docs = await document_service.list_documents(db, owner_id=1, folder_id=folder_id)
     doc_responses = [DocumentResponse.model_validate(d) for d in docs]
     return templates.TemplateResponse(
-        "_doc_cards.html", {"request": request, "documents": doc_responses}
+        request=request, name="_doc_cards.html", context={"documents": doc_responses}
     )
 
 
