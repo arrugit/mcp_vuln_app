@@ -115,22 +115,22 @@ async def index(request: Request) -> HTMLResponse:
 @app.get("/documents", response_class=HTMLResponse)
 async def documents_page(request: Request) -> HTMLResponse:
     """Render the documents management page."""
-    return templates.TemplateResponse("documents.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="documents.html")
 
 
 @app.get("/tasks", response_class=HTMLResponse)
 async def tasks_page(request: Request) -> HTMLResponse:
     """Render the task management page."""
-    return templates.TemplateResponse("tasks.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="tasks.html")
 
 
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_page(request: Request) -> HTMLResponse:
     """Render the calendar page."""
-    return templates.TemplateResponse("calendar.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="calendar.html")
 
 
 @app.get("/secrets", response_class=HTMLResponse)
 async def secrets_page(request: Request) -> HTMLResponse:
     """Render the application configuration / secrets page."""
-    return templates.TemplateResponse("secrets.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="secrets.html")
