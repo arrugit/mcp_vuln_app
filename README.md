@@ -60,25 +60,23 @@ Navigate to **http://localhost:8005** in your browser.
 
 ## Current Status
 
-### What's live (Phase 1)
+### What's live (Phase 2)
 
-- **Document Management** — upload (TXT, MD, PDF, DOCX), list, view content, delete. Content is read via the MCP server's `read_file` tool.
+- **Document Management** — upload (TXT, MD, PDF, DOCX), list, view content, delete. Content is read via the MCP server's `read_file` tool. Document list uses HTMX partial rendering for dynamic updates.
 - **Task Management** — create tasks (title, description, priority, due date), kanban board (To Do / In Progress / Review / Done), status updates, comments.
 - **Calendar** — monthly grid view, event creation, tasks with due dates appear on the calendar.
 - **MCP Architecture** — real MCP client/server wiring. The backend spawns the MCP server as a subprocess and communicates via JSON-RPC over stdio using `ClientSession.call_tool()`. Every file read goes through this protocol path.
+- **MCP02 Vulnerability** — path traversal via blacklist bypass is live. The document viewer reads files through the MCP server's `read_file` tool, which uses a flawed `is_path_safe()` function. Exploit documentation in `exploits/mcp02_path_traversal.md`.
 - **Frontend** — HTMX + Alpine.js + Jinja2 templates, no build step, professional SaaS aesthetic.
 
 ### What's NOT yet exposed
 
-No vulnerability is reachable through the UI in Phase 1. The following starts in subsequent phases:
-
 | Phase | What gets added |
 |-------|----------------|
-| Phase 2 | MCP02 — Path traversal via blacklist bypass (document viewer exposes `is_path_safe()` bypass) |
 | Phase 3 | MCP01 — Secret file exposure (`data/config/secrets.env` accessible via `read_file`) |
 | Phase 4 | MCP06 — Indirect prompt injection (Ollama summarization flow processes untrusted document content) |
 
-Exploit documentation will be added to the `exploits/` directory as each phase completes.
+Exploit documentation is added to the `exploits/` directory as each phase completes.
 
 ## Project Structure
 
@@ -108,7 +106,8 @@ vulnex/
     uploads/             # User-uploaded documents
     config/              # Application config (secrets.env added in Phase 3)
     vulnex.db            # SQLite database (created at runtime)
-  exploits/              # Exploit documentation (added per phase)
+  exploits/
+    mcp02_path_traversal.md  # Exploit documentation for MCP02
 ```
 
 ## Tech Stack
