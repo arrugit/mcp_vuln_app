@@ -37,6 +37,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 |------|---------|
 | `main.py` | FastAPI app entrypoint. Manages lifespan (database init, MCP server spawn/stop, default user seeding). Mounts static files, includes API routers, serves page templates. |
 | `mcp_client.py` | **Only module that talks to the MCP server.** `MCPClient` class spawns `mcp_server.server` as subprocess via `asyncio`, manages `ClientSession`, provides `call_tool(tool_name, arguments) → dict`. Module-level singleton `mcp_client`. |
+| `llm_client.py` | Ollama HTTP client. `LLMClient` class calls Ollama's `/api/generate` endpoint using stdlib `urllib.request`. Configurable via `VULNEX_OLLAMA_URL` and `VULNEX_OLLAMA_MODEL` env vars. Module-level singleton `llm_client`. |
 | `database.py` | SQLAlchemy async engine for SQLite (`data/vulnex.db`). `get_db()` dependency for FastAPI route injection. |
 | `models.py` | SQLAlchemy ORM models: `User`, `Folder`, `Document`, `Task`, `TaskComment`, `Event`. |
 | `schemas.py` | Pydantic request/response schemas for all API endpoints. |
@@ -47,6 +48,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | `services/document_service.py` | Document business logic. `get_document_content()` constructs full path and calls `mcp_service.read_file()`. |
 | `services/task_service.py` | Task business logic: CRUD, filtering, comment management. |
 | `services/mcp_service.py` | High-level wrappers: `read_file()`, `write_file()`, `list_files()`, `search_documents()`. All call `mcp_client.call_tool()`. |
+| `services/summarization_service.py` | AI summarization via Ollama. Accepts document content, builds prompt, calls `llm_client.generate()`. Vulnerable to MCP06 — document content injected into prompt without sanitization. |
 | `templates/base.html` | Jinja2 base template. CDN links for HTMX 1.9 + Alpine.js 3.x. Left sidebar nav. |
 | `templates/documents.html` | Document list grid (HTMX partial loading), upload modal, document viewer panel, summary panel. |
 | `templates/_doc_cards.html` | HTMX partial for document cards — rendered by `/api/documents/partial/list`. |
@@ -104,7 +106,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 |----|------|----------|--------|
 | MCP02 | Path Traversal Blacklist Bypass | `mcp_server/file_tools.py` (`is_path_safe()`) | **Done** — live through document viewer, exploit doc written |
 | MCP01 | Secret Exposure | `data/config/secrets.env` | **Done** — live through Config page, exploit doc written |
-| MCP06 | Indirect Prompt Injection | `backend/llm_client.py` + `backend/services/summarization_service.py` | Not yet implemented (Phase 4) |
+| MCP06 | Indirect Prompt Injection | `backend/llm_client.py` + `backend/services/summarization_service.py` | **Done** — live through document summarization, exploit doc written |
 
 ---
 
@@ -138,7 +140,7 @@ MCP Server (official mcp Python SDK, MCPServer v2)
 | 1 | `phase-1/mcp-foundation` | MCP server/client, file tools, backend, frontend, basic CRUD | **Done** |
 | 2 | `phase-2/mcp02-path-traversal` | MCP02 vulnerability, document viewer integration, exploit docs | **Done** |
 | 3 | `phase-3/mcp01-secret-exposure` | MCP01 vulnerability, secrets file, exploit docs | **Done** |
-| 4 | `phase-4/mcp06-prompt-injection` | MCP06 vulnerability, Ollama integration, exploit docs | Next |
+| 4 | `phase-4/mcp06-prompt-injection` | MCP06 vulnerability, Ollama integration, exploit docs | **Done** |
 
 ## Running
 
