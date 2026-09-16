@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% set active_page = "calendar" %}
+
+{% block title %}Calendar — VULNEX{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Calendar</h2>
+    <div class="flex gap-1">
+        <button class="btn btn-secondary btn-sm" x-data x-on:click="$dispatch('cal-prev')">&larr; Prev</button>
+        <button class="btn btn-secondary btn-sm" x-data x-on:click="$dispatch('cal-today')">Today</button>
+        <button class="btn btn-secondary btn-sm" x-data x-on:click="$dispatch('cal-next')">Next &rarr;</button>
+        <button class="btn btn-primary btn-sm" x-data x-on:click="$dispatch('open-create-event')">New Event</button>
+    </div>
+</div>
+
+<!-- Month/Year Header -->
+<div class="mb-2" style="text-align: center;" x-data="{ month: '', year: 0 }"
+     x-init="var d = new Date(); month = d.toLocaleString('default', {month: 'long'}); year = d.getFullYear();">
+    <h3 x-text="month + ' ' + year"></h3>
+</div>
+
+<!-- Create Event Modal -->
+<div class="modal-overlay" x-data="{ open: false }" x-on:open-create-event.window="open = true" x-on:keydown.escape.window="open = false" :class="{ active: open }">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Create Event</h3>
+            <button class="modal-close" x-on:click="open = false">&times;</button>
+        </div>
+        <form hx-post="/api/calendar/"
+              hx-encoding="application/json"
+              hx-swap="none"
+              x-on:submit="open = false">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" required placeholder="Event title">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="2" placeholder="Optional description"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Start</label>
+                <input type="datetime-local" name="start_time" required>
+            </div>
+            <div class="form-group">
+                <label>End</label>
+                <input type="datetime-local" name="end_time" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="is_recurring" value="true">
+                    Recurring event
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" x-on:click="open = false">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="calendar-grid mt-2" id="calendar-grid">
+    <div class="calendar-header">Sun</div>
+    <div class="calendar-header">Mon</div>
+    <div class="calendar-header">Tue</div>
+    <div class="calendar-header">Wed</div>
+    <div class="calendar-header">Thu</div>
+    <div class="calendar-header">Fri</div>
+    <div class="calendar-header">Sat</div>
+</div>
+
+<script>
+    (function() {
+        var currentYear = new Date().getFullYear();
+        var currentMonth = new Date().getMonth();
+
+        function renderCalendar() {
+            var grid = document.getElementById('calendar-grid');
+            var headers = grid.querySelectorAll('.calendar-header');
+            grid.innerHTML = '';
+            headers.forEach(function(h) { grid.appendChild(h); });
+
+            var firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            var today = new Date();
+
+            // Previous month padding
+            var prevDays = new Date(currentYear, currentMonth, 0).getDate();
+            for (var i = firstDay - 1; i >= 0; i--) {
+                var cell = document.createElement('div');
+                cell.className = 'calendar-day other-month';
+                cell.innerHTML = '<div class="day-number">' + (prevDays - i) + '</div>';
+                grid.appendChild(cell);
+            }
+
+            // Current month days
+            for (var d = 1; d <= daysInMonth; d++) {
+                var cell = document.createElement('div');
+                cell.className = 'calendar-day';
+                if (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                    cell.classList.add('today');
+                }
+                cell.innerHTML = '<div class="day-number">' + d + '</div>';
+                grid.appendChild(cell);
+            }
+
+            // Next month padding
+            var totalCells = firstDay + daysInMonth;
+            var remaining = (7 - (totalCells % 7)) % 7;
+            for (var n = 1; n <= remaining; n++) {
+                var cell = document.createElement('div');
+                cell.className = 'calendar-day other-month';
+                cell.innerHTML = '<div class="day-number">' + n + '</div>';
+                grid.appendChild(cell);
+            }
+        }
+
+        document.addEventListener('cal-prev', function() {
+            if (currentMonth === 0) { currentMonth = 11; currentYear--; }
+            else { currentMonth--; }
+            renderCalendar();
+        });
+        document.addEventListener('cal-next', function() {
+            if (currentMonth === 11) { currentMonth = 0; currentYear++; }
+            else { currentMonth++; }
+            renderCalendar();
+        });
+        document.addEventListener('cal-today', function() {
+            currentYear = new Date().getFullYear();
+            currentMonth = new Date().getMonth();
+            renderCalendar();
+        });
+
+        renderCalendar();
+    })();
+</script>
+{% endblock %}

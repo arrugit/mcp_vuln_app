@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% set active_page = "documents" %}
+
+{% block title %}Documents — VULNEX{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Documents</h2>
+    <button class="btn btn-primary" x-data x-on:click="$dispatch('open-upload')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+    </button>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" x-data="{ open: false }" x-on:open-upload.window="open = true" x-on:keydown.escape.window="open = false" :class="{ active: open }">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Upload Document</h3>
+            <button class="modal-close" x-on:click="open = false">&times;</button>
+        </div>
+        <form hx-post="/api/documents/"
+              hx-encoding="multipart/form-data"
+              hx-target="#doc-grid"
+              hx-swap="innerHTML"
+              x-on:submit="open = false">
+            <div class="form-group">
+                <label>File</label>
+                <input type="file" name="file" accept=".txt,.md,.pdf,.docx" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" x-on:click="open = false">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Document List -->
+<div id="doc-grid" class="doc-grid mt-2">
+    <div class="text-muted text-sm" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+        Loading documents...
+    </div>
+</div>
+
+<!-- Document Viewer -->
+<div id="doc-viewer" class="doc-viewer" style="display: none;">
+    <div class="flex-between mb-1">
+        <strong id="viewer-filename"></strong>
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('doc-viewer').style.display='none'">Close</button>
+    </div>
+    <pre id="viewer-content"></pre>
+</div>
+
+<!-- Summary Panel -->
+<div id="summary-panel" class="summary-panel" style="display: none;">
+    <div class="flex-between mb-1">
+        <h4>AI Summary</h4>
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('summary-panel').style.display='none'">Close</button>
+    </div>
+    <div id="summary-content" class="summary-content"></div>
+</div>
+
+<script>
+    // Load documents on page load
+    document.body.addEventListener('htmx:load', function(evt) {
+        htmx.ajax('GET', '/api/documents/', '#doc-grid');
+    });
+
+    function viewDocument(docId) {
+        fetch('/api/documents/' + docId + '/content')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('viewer-filename').textContent = data.filename;
+                document.getElementById('viewer-content').textContent = data.content;
+                document.getElementById('doc-viewer').style.display = 'block';
+                document.getElementById('summary-panel').style.display = 'none';
+            });
+    }
+
+    function summarizeDocument(docId) {
+        var panel = document.getElementById('summary-panel');
+        var content = document.getElementById('summary-content');
+        panel.style.display = 'block';
+        content.textContent = 'Generating summary...';
+
+        fetch('/api/documents/' + docId + '/summarize', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                content.textContent = data.summary || 'No summary generated.';
+            })
+            .catch(function(err) {
+                content.textContent = 'Error: ' + err.message;
+            });
+    }
+</script>
+{% endblock %}
